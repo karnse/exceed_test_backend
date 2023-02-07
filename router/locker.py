@@ -31,3 +31,24 @@ def rent_locker(locker:Container):
     else:
         collection.insert_one({"uid":locker.uid,"item_in_contain":locker.item_in_contain,"hours":locker.hours,"locker_id":locker.locker_id,"check_in_time":str(locker.check_in_time),"check_out_time":str(locker.check_out_time)})
 
+@router.delete('/checkout/{uid}')
+def checkout_locker(uid:int,money:int=0):
+    ans=0
+    x = collection.find_one({"uid":uid},{'_id':0})
+    if not x:
+        raise HTTPException(status_code=400)
+    x = Container(**x)
+    now = datetime.now()
+    if(now>x.check_out_time):
+        ans+=money
+        ans-=max(((x.check_out_time-x.check_in_time).seconds//60//60-2),0)*5
+        ans-=((now-x.check_out_time).seconds//600)*20
+    else:
+        ans+=money
+        ans-=max(((x.check_out_time-x.check_in_time).seconds//60//60-2),0)*5
+    if ans<0:
+        raise HTTPException(status_code=400)
+    collection.delete_one({"uid":x.uid})
+    if ans:
+        return {'change':ans}
+    return 
