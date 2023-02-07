@@ -13,3 +13,18 @@ class Container(BaseModel):
     cost:int = 0
 
 router = APIRouter(prefix='/locker')
+
+# def get_locker_detail():
+#     for i in range(6):
+#         collection.insert_one({'uid':None,'item_in_contain':None,'hour':None,'locker_id':i+1,'check_in_time':None,'check_out_time':None})
+#     return "Get Data Success"
+
+@router.get('/')
+def view_avail():
+    avail_room={1:'Available',2:'Available',3:'Available',4:'Available',5:'Available',6:'Available'}
+    for i in collection.find():
+        is_avail='Not Available '+str((datetime.fromisoformat(i['check_out_time'])-datetime.now()).seconds//60)+' minutes' 
+        avail_room[i['locker_id']]=is_avail
+    return avail_room
+
+
