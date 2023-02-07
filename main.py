@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Union,Optional
+from pydantic import BaseModel
+from router import locker
 
 app = FastAPI()
 
@@ -14,6 +17,11 @@ app.add_middleware(
 )
 
 
+
+
+app = FastAPI()
+app.include_router(locker.router)
+
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def root():
+    return {"msg":"welcome to root page"}
