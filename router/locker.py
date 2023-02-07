@@ -13,6 +13,14 @@ class Container(BaseModel):
 
 router = APIRouter(prefix='/locker')
 
+@router.get('/')
+def view_avail():
+    avail_room={1:'Available',2:'Available',3:'Available',4:'Available',5:'Available',6:'Available'}
+    for i in collection.find():
+        is_avail='Not Available '+str((datetime.fromisoformat(i['check_out_time'])-datetime.now()).seconds//60)+' minutes' 
+        avail_room[i['locker_id']]=is_avail
+    return avail_room
+    
 @router.post('/rent')
 def rent_locker(locker:Container):
     locker.check_in_time=datetime.now()
@@ -22,3 +30,4 @@ def rent_locker(locker:Container):
         raise HTTPException(status_code=400)
     else:
         collection.insert_one({"uid":locker.uid,"item_in_contain":locker.item_in_contain,"hours":locker.hours,"locker_id":locker.locker_id,"check_in_time":str(locker.check_in_time),"check_out_time":str(locker.check_out_time)})
+
