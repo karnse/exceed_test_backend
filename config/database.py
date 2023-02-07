@@ -8,3 +8,4 @@ client = MongoClient(f'mongodb://{username}:{password}@mongo.exceed19.online:844
 
 # print(username,password)
 db = client['exceed03']
+collection = db['locker']
