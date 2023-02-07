@@ -26,8 +26,29 @@ def rent_locker(locker:Container):
     locker.check_in_time=datetime.now()
     locker.check_out_time=locker.check_in_time+timedelta(hours=locker.hours)
     locker.check_in_time=locker.check_in_time
-    if (collection.find_one({"locker_id":locker.locker_id})) or (locker.check_in_time.day!=locker.check_out_time.day) or (locker.check_in_time.year!=locker.check_out_time.year) or (locker.check_in_time.month!=locker.check_out_time.month):
+    if (collection.find_one({'$or':[{"locker_id":locker.locker_id},{"uid":locker.uid}]})) or (locker.check_in_time.day!=locker.check_out_time.day) or (locker.check_in_time.year!=locker.check_out_time.year) or (locker.check_in_time.month!=locker.check_out_time.month) or locker.locker_id>6 or locker.locker_id<1 or locker.hours<0:
         raise HTTPException(status_code=400)
     else:
         collection.insert_one({"uid":locker.uid,"item_in_contain":locker.item_in_contain,"hours":locker.hours,"locker_id":locker.locker_id,"check_in_time":str(locker.check_in_time),"check_out_time":str(locker.check_out_time)})
 
+@router.delete('/checkout/{uid}')
+def checkout_locker(uid:int,money:int=0):
+    ans=0
+    x = collection.find_one({"uid":uid},{'_id':0})
+    if not x:
+        raise HTTPException(status_code=400)
+    x = Container(**x)
+    now = datetime.now()
+    if(now>x.check_out_time):
+        ans+=money
+        ans-=max(((x.check_out_time-x.check_in_time).seconds//60//60-2),0)*5
+        ans-=((now-x.check_out_time).seconds//600)*20
+    else:
+        ans+=money
+        ans-=max(((x.check_out_time-x.check_in_time).seconds//60//60-2),0)*5
+    if ans<0:
+        raise HTTPException(status_code=400,detail=f'total = {abs(ans)} bath')
+    collection.delete_one({"uid":x.uid})
+    if ans:
+        return {'change':ans,'contain':x.item_in_contain}
+    return {'contain':x.item_in_contain}
